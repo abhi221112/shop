@@ -41,6 +41,19 @@ async def remove_image(url: str | None) -> None:
         (UPLOAD_DIR / name).unlink(missing_ok=True)
 
 
+async def forget_lost_images() -> None:
+    """Clears product photos whose file is gone (saved on a disk the host has since wiped),
+    so Admin offers "Upload photo" again instead of keeping a dead link."""
+    rows = await db.fetch(
+        """SELECT id, image_url FROM products
+           WHERE image_url LIKE '/uploads/%' AND substr(image_url, 10) NOT IN (SELECT name FROM images)"""
+    )
+    lost = [r["id"] for r in rows if not (UPLOAD_DIR / Path(r["image_url"]).name).is_file()]
+    if lost:
+        await db.execute("UPDATE products SET image_url = NULL WHERE id = ANY($1::int[])", lost)
+        print(f"Cleared {len(lost)} lost product photos; upload them again in Admin › Prices", flush=True)
+
+
 @router.get("/uploads/{name}", include_in_schema=False)
 async def get_image(name: str):
     row = await db.fetchrow("SELECT content_type, data FROM images WHERE name = $1", name)

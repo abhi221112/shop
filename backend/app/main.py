@@ -29,6 +29,7 @@ async def _expire_loop():
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     await db.connect()
+    await uploads.forget_lost_images()
     print(f"API ready (admin phone {settings.admin_phone}, OTP dev mode {settings.otp_dev_mode})", flush=True)
     task = asyncio.create_task(_expire_loop())
     yield
