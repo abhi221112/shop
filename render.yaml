@@ -32,10 +32,8 @@ services:
       # No SMS provider yet, so login codes are shown on screen.
       - key: OTP_DEV_MODE
         value: "true"
-      - key: RAZORPAY_KEY_ID
-        sync: false
-      - key: RAZORPAY_KEY_SECRET
-        sync: false
+      # UPI: with no keys a test payment is used. Add RAZORPAY_KEY_ID and
+      # RAZORPAY_KEY_SECRET later under the service's Environment tab.
     # Product photos are lost on every deploy/restart without a disk.
     # Disks need a paid plan: set plan: starter above and uncomment.
     # disk:
