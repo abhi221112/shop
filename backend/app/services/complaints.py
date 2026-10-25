@@ -64,7 +64,7 @@ async def create(order: dict, user, text: str, item_ids: list[int], photos: list
             await c.execute("UPDATE orders SET issue = $2, issue_at = now() WHERE id = $1", order["id"], text)
     except Exception:
         for u in urls:
-            remove_image(u)
+            await remove_image(u)
         raise
     await notify.send(order["customerPhone"], f"We got your report about order {order['code']}. The shop will check your photos and reply soon.")
 

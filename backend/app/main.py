@@ -10,11 +10,10 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import db
+from . import db, uploads
 from .config import settings
 from .routes import addresses, admin, auth, catalog, delivery, offers, orders
 from .services.orders import expire_unpaid_orders
-from .uploads import UPLOAD_DIR
 from .util import ApiError
 
 
@@ -74,7 +73,7 @@ async def validation_error(_req: Request, exc: RequestValidationError):
 for module in (catalog, auth, addresses, orders, offers, admin, delivery):
     app.include_router(module.router)
 
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+app.include_router(uploads.router)
 
 # Single-service hosting (Render): serve the built website, with index.html for every app route.
 if settings.static_dir:

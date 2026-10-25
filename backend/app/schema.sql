@@ -212,3 +212,11 @@ CREATE TABLE IF NOT EXISTS complaints (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS complaints_order_uidx ON complaints (order_id);
 CREATE INDEX IF NOT EXISTS complaints_status_idx ON complaints (status, created_at DESC);
+
+-- Uploaded photos (products, bad-item reports). In the database so they survive restarts and redeploys.
+CREATE TABLE IF NOT EXISTS images (
+  name          TEXT PRIMARY KEY,
+  content_type  TEXT NOT NULL,
+  data          BYTEA NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);

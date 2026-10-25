@@ -107,10 +107,8 @@ function MobileHeader({ q, onSearch }) {
 }
 
 function Hero() {
-  const { slots } = useShop();
   const [pin, setPin] = useState('');
   const [result, setResult] = useState(null);
-  const slot = slots.find((s) => !s.full);
 
   async function check(e) {
     e.preventDefault();
@@ -125,7 +123,7 @@ function Hero() {
         <div className="hero-copy">
           <span className="pill pill-yellow">Fresh from the mandi every morning</span>
           <h1>Your local vegetable shop, now at your door.</h1>
-          <p>{slot?.express ? `Express delivery in ${slot.minutes} minutes, or pick a slot.` : slot ? `Order by ${slot.orderBy} for the ${slot.day.toLowerCase()} ${slot.label} slot.` : 'Order today for doorstep delivery.'} Pay by UPI or cash. Prices updated daily, weighed fairly.</p>
+          <p>Order anytime between 5 AM and 10 PM and pick a delivery slot that suits you. Pay by UPI or cash. Prices updated daily, weighed fairly.</p>
           <form className="pin-form" onSubmit={check}>
             <label>
               <span>Check if we deliver to you</span>

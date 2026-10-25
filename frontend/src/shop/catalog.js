@@ -18,8 +18,16 @@ export function categoriesOf(products) {
   }));
 }
 
+// Local names are in Hindi; these let "lauki" or "pyaz" typed in English letters still find them.
+const LOCAL_IN_ENGLISH = {
+  'टमाटर': 'tamatar', 'प्याज़': 'pyaz', 'आलू': 'aloo', 'पालक': 'palak', 'भिंडी': 'bhindi', 'धनिया': 'dhaniya',
+  'मेथी': 'methi', 'गाजर': 'gajar', 'लौकी': 'lauki', 'गोभी': 'gobhi', 'हरी मिर्च': 'hari mirch', 'अदरक': 'adrak',
+  'केला': 'kela', 'पपीता': 'papita', 'ब्रोकली': 'broccoli', 'ज़ुकीनी': 'zucchini',
+};
+
 export function matches(p, q) {
   if (!q) return true;
   const s = q.trim().toLowerCase();
-  return p.name.toLowerCase().includes(s) || (p.localName || '').toLowerCase().includes(s);
+  const local = p.localName || '';
+  return [p.name, local, LOCAL_IN_ENGLISH[local] || ''].some((text) => text.toLowerCase().includes(s));
 }

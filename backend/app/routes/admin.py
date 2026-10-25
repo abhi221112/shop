@@ -325,7 +325,7 @@ async def edit_product(product_id: int, request: Request):
         f["stock"], f["lowStockAt"], f["tint"], image_url,
     )
     if old["image_url"] and old["image_url"] != image_url:
-        remove_image(old["image_url"])
+        await remove_image(old["image_url"])
     return to_product(p)
 
 

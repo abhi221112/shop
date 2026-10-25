@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { isNativeApp } from '../api';
-import { CartIcon, GridIcon, HomeIcon, ListIcon, SearchIcon, UserIcon } from '../components/Icons';
+import { CartIcon, ClockIcon, GridIcon, HomeIcon, ListIcon, MapIcon, PhoneIcon, PinIcon, SearchIcon, UserIcon } from '../components/Icons';
 import { useAuth, useCart, useShop } from '../state';
 
 const NAV_PAGES = ['/', '/categories', '/orders', '/account'];
@@ -14,7 +14,7 @@ export default function ShopLayout() {
       <main className="shop-main">
         <Outlet />
       </main>
-      <Footer />
+      <Footer onMobile={showBottomNav} />
       {showBottomNav && <BottomNav />}
     </div>
   );
@@ -35,7 +35,7 @@ function DesktopHeader() {
   return (
     <header className="site-header desktop-only">
       <div className="container site-header-row">
-        <Link to="/" className="brand">{config.shopName}</Link>
+        <Link to="/" className="brand"><img src="/logo.webp" alt={config.shopName} className="brand-logo" /></Link>
         <label className="search search-light">
           <SearchIcon size={18} />
           <input aria-label="Search vegetables" placeholder="Search tomato, palak, bhindi…" value={params.get('q') || ''} onChange={onSearch} />
@@ -68,16 +68,50 @@ function BottomNav() {
   );
 }
 
-function Footer() {
+// SHOP_PHONE can list several numbers: "9005526038, 9956688958".
+const phonesOf = (value) => (value || '').split(',').map((p) => p.replace(/\D/g, '').slice(-10)).filter((p) => p.length === 10);
+const showPhone = (p) => `${p.slice(0, 5)} ${p.slice(5)}`;
+
+function Footer({ onMobile }) {
   const { config } = useShop();
+  const phones = phonesOf(config.shopPhone);
+  const address = config.shopAddress;
+  const mapQuery = encodeURIComponent(address || '');
   return (
-    <footer className="site-footer desktop-only">
-      <div className="container site-footer-row">
+    <footer className={`site-footer ${onMobile ? '' : 'desktop-only'}`}>
+      <div className="container site-footer-grid">
         <div className="stack-sm">
           <strong>{config.shopName}</strong>
-          <span>{[config.shopAddress, config.shopPhone].filter(Boolean).join(' · ') || 'Fresh vegetables, delivered daily'}</span>
+          <span>Fresh vegetables and fruits, delivered to your door.</span>
+          <span className="footer-line"><ClockIcon size={16} />Order anytime, 5 AM – 10 PM</span>
+          {!isNativeApp() && <span className="small">Order daily? Add this site to your home screen.</span>}
         </div>
-        {!isNativeApp() && <span>Order daily? Add this site to your home screen, or install our Android app.</span>}
+
+        {phones.length > 0 && (
+          <div className="stack-sm">
+            <strong>Call or WhatsApp us</strong>
+            <ul className="footer-contacts">
+              {phones.map((p) => (
+                <li key={p}>
+                  <a href={`tel:+91${p}`} className="footer-line"><PhoneIcon size={16} />{showPhone(p)}</a>
+                  <a href={`https://wa.me/91${p}`} target="_blank" rel="noreferrer" className="footer-chip">WhatsApp</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {address && (
+          <div className="stack-sm footer-visit">
+            <strong>Visit our shop</strong>
+            <span className="footer-line"><PinIcon size={16} />{address}</span>
+            <iframe className="footer-map" title={`Map: ${address}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+              src={`https://maps.google.com/maps?q=${mapQuery}&z=16&output=embed`} />
+            <a href={`https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`} target="_blank" rel="noreferrer" className="footer-line">
+              <MapIcon size={16} />Get directions
+            </a>
+          </div>
+        )}
       </div>
     </footer>
   );

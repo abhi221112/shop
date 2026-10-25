@@ -1,25 +1,35 @@
 from . import db
 from .config import settings
+from .util import normalize_phone
 
 # Starting catalogue from the design. Edit prices and stock from Admin › Prices & stock.
 PRODUCTS = [
-    ("Tomato", "Tamatar", "Everyday", "kg", 0.25, 40, 22, "#F7DCD5"),
-    ("Onion", "Pyaz", "Roots", "kg", 0.5, 35, 40, "#EEDFEA"),
-    ("Potato", "Aloo", "Roots", "kg", 1, 30, 55, "#F1E3CC"),
-    ("Spinach", "Palak", "Leafy", "bunch", 1, 20, 30, "#DCEBD8"),
-    ("Lady finger", "Bhindi", "Everyday", "kg", 0.25, 60, 3, "#E4EED5"),
-    ("Coriander", "Dhaniya", "Leafy", "bunch", 1, 10, 6, "#DCEBD8"),
-    ("Fenugreek", "Methi", "Leafy", "bunch", 1, 15, 20, "#DCEBD8"),
-    ("Carrot", "Gajar", "Roots", "kg", 0.5, 50, 18, "#FBDCC4"),
-    ("Bottle gourd", "Lauki", "Everyday", "piece", 1, 30, 15, "#E4EED5"),
-    ("Cauliflower", "Gobhi", "Everyday", "piece", 1, 30, 12, "#F1EEE4"),
-    ("Green chilli", "Hari mirch", "Everyday", "kg", 0.1, 80, 4, "#DCEBD8"),
-    ("Ginger", "Adrak", "Roots", "kg", 0.1, 120, 1, "#F1E3CC"),
-    ("Banana", "Kela", "Fruits", "piece", 6, 6, 120, "#FBEBC0"),
-    ("Papaya", "Papita", "Fruits", "piece", 1, 45, 10, "#FBDCC4"),
-    ("Broccoli", "", "Exotic", "piece", 1, 70, 8, "#E4EED5"),
-    ("Zucchini", "", "Exotic", "kg", 0.25, 120, 5, "#E4EED5"),
+    ("Tomato", "टमाटर", "Everyday", "kg", 0.25, 40, 22, "#F7DCD5"),
+    ("Onion", "प्याज़", "Roots", "kg", 0.5, 35, 40, "#EEDFEA"),
+    ("Potato", "आलू", "Roots", "kg", 1, 30, 55, "#F1E3CC"),
+    ("Spinach", "पालक", "Leafy", "bunch", 1, 20, 30, "#DCEBD8"),
+    ("Lady finger", "भिंडी", "Everyday", "kg", 0.25, 60, 3, "#E4EED5"),
+    ("Coriander", "धनिया", "Leafy", "bunch", 1, 10, 6, "#DCEBD8"),
+    ("Fenugreek", "मेथी", "Leafy", "bunch", 1, 15, 20, "#DCEBD8"),
+    ("Carrot", "गाजर", "Roots", "kg", 0.5, 50, 18, "#FBDCC4"),
+    ("Bottle gourd", "लौकी", "Everyday", "piece", 1, 30, 15, "#E4EED5"),
+    ("Cauliflower", "गोभी", "Everyday", "piece", 1, 30, 12, "#F1EEE4"),
+    ("Green chilli", "हरी मिर्च", "Everyday", "kg", 0.1, 80, 4, "#DCEBD8"),
+    ("Ginger", "अदरक", "Roots", "kg", 0.1, 120, 1, "#F1E3CC"),
+    ("Banana", "केला", "Fruits", "piece", 6, 6, 120, "#FBEBC0"),
+    ("Papaya", "पपीता", "Fruits", "piece", 1, 45, 10, "#FBDCC4"),
+    ("Broccoli", "ब्रोकली", "Exotic", "piece", 1, 70, 8, "#E4EED5"),
+    ("Zucchini", "ज़ुकीनी", "Exotic", "kg", 0.25, 120, 5, "#E4EED5"),
 ]
+
+# Local names used to be written in English letters. Shops seeded back then get the Hindi ones,
+# unless the name was changed in Admin since.
+OLD_LOCAL_NAMES = {
+    "Tomato": "Tamatar", "Onion": "Pyaz", "Potato": "Aloo", "Spinach": "Palak", "Lady finger": "Bhindi",
+    "Coriander": "Dhaniya", "Fenugreek": "Methi", "Carrot": "Gajar", "Bottle gourd": "Lauki",
+    "Cauliflower": "Gobhi", "Green chilli": "Hari mirch", "Ginger": "Adrak", "Banana": "Kela",
+    "Papaya": "Papita", "Broccoli": "", "Zucchini": "",
+}
 
 SLOTS = [("7 – 9 AM", 7, 9, 20), ("5 – 7 PM", 17, 19, 25), ("7 – 9 PM", 19, 21, 15)]
 
@@ -28,8 +38,14 @@ async def seed() -> None:
     await db.execute(
         """INSERT INTO users (phone, name, role) VALUES ($1, 'Shop owner', 'admin')
            ON CONFLICT (phone) DO UPDATE SET role = 'admin'""",
-        settings.admin_phone,
+        # Same format as login, so "+91 98765 43210" in ADMIN_PHONE matches "9876543210".
+        normalize_phone(settings.admin_phone) or settings.admin_phone,
     )
+    async with db.transaction() as c:
+        await c.executemany(
+            "UPDATE products SET local_name = $3 WHERE name = $1 AND local_name = $2",
+            [(name, OLD_LOCAL_NAMES[name], local) for name, local, *_ in PRODUCTS],
+        )
     # Express delivery slot (added after first release): created once, switched off until you open it in Admin.
     await db.execute(
         """INSERT INTO slots (label, start_hour, end_hour, capacity, active, kind, minutes, fee)

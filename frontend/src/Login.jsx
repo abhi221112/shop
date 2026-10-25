@@ -57,7 +57,7 @@ export default function Login() {
     <div className="login-page">
       <div className="login-card">
         <Link to="/" className="icon-btn login-back" aria-label="Back to shop"><BackIcon /></Link>
-        <span className="brand">{config.shopName}</span>
+        <span className="brand"><img src="/logo.webp" alt={config.shopName} className="brand-logo" /></span>
         {step === 'phone' ? (
           <form onSubmit={sendCode} className="stack">
             <h1>Log in with your mobile number</h1>
