@@ -196,7 +196,7 @@ img { display: block; max-width: 100%; }
 .site-footer a { color: var(--on-dark); text-decoration: none; }
 .site-footer a:hover { color: var(--white); }
 .site-footer-grid { display: grid; gap: 28px; padding-top: 32px; padding-bottom: 32px; font-size: 14px; }
-@media (min-width: 900px) { .site-footer-grid { grid-template-columns: 1fr 1fr 1.4fr; } }
+@media (min-width: 900px) { .site-footer-grid { grid-template-columns: repeat(3, 1fr); } }
 .footer-line { display: inline-flex; align-items: flex-start; gap: 8px; line-height: 1.4; }
 .footer-line svg { flex: none; margin-top: 2px; color: var(--yellow); }
 a.footer-line { min-height: 32px; align-items: center; font-weight: 600; }
@@ -205,7 +205,13 @@ a.footer-line svg { margin-top: 0; }
 .footer-contacts li { display: flex; align-items: center; gap: 12px; }
 .site-footer .footer-chip { padding: 4px 10px; border-radius: 999px; background: var(--green-2); color: var(--white); font-size: 12px; font-weight: 700; }
 .site-footer .footer-chip:hover { background: var(--green); }
-.footer-map { width: 100%; height: 200px; border: 0; border-radius: 12px; background: var(--ink-2); }
+.site-footer .footer-visit { display: flex; align-items: center; gap: 12px; line-height: 1.4; }
+.footer-pin {
+  width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center;
+  border-radius: 22px; background: var(--yellow); color: var(--ink); transition: transform 0.15s;
+}
+.footer-visit:hover .footer-pin { transform: scale(1.08); }
+.footer-visit-hint { display: block; margin-top: 2px; color: var(--yellow); font-size: 13px; font-weight: 700; }
 /* On phones the bottom nav and cart bar float over the page end: keep that space inside the footer. */
 @media (max-width: 899px) {
   .shop.has-bottom-nav .shop-main { padding-bottom: 24px; }

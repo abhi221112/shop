@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { isNativeApp } from '../api';
-import { CartIcon, ClockIcon, GridIcon, HomeIcon, ListIcon, MapIcon, PhoneIcon, PinIcon, SearchIcon, UserIcon } from '../components/Icons';
+import { CartIcon, ClockIcon, GridIcon, HomeIcon, ListIcon, PhoneIcon, PinIcon, SearchIcon, UserIcon } from '../components/Icons';
 import { useAuth, useCart, useShop } from '../state';
 
 const NAV_PAGES = ['/', '/categories', '/orders', '/account'];
@@ -102,13 +102,12 @@ function Footer({ onMobile }) {
         )}
 
         {address && (
-          <div className="stack-sm footer-visit">
+          <div className="stack-sm">
             <strong>Visit our shop</strong>
-            <span className="footer-line"><PinIcon size={16} />{address}</span>
-            <iframe className="footer-map" title={`Map: ${address}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade"
-              src={`https://maps.google.com/maps?q=${mapQuery}&z=16&output=embed`} />
-            <a href={`https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`} target="_blank" rel="noreferrer" className="footer-line">
-              <MapIcon size={16} />Get directions
+            <a href={`https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`} target="_blank" rel="noreferrer"
+              className="footer-visit" title="Get directions in Google Maps">
+              <span className="footer-pin"><PinIcon size={20} /></span>
+              <span>{address}<span className="footer-visit-hint">Get directions ↗</span></span>
             </a>
           </div>
         )}
