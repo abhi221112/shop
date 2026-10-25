@@ -1,11 +1,12 @@
 import asyncio
 import contextlib
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -74,3 +75,17 @@ for module in (catalog, auth, addresses, orders, offers, admin, delivery):
     app.include_router(module.router)
 
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+# Single-service hosting (Render): serve the built website, with index.html for every app route.
+if settings.static_dir:
+    STATIC_DIR = Path(settings.static_dir).resolve()
+    app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    async def website(path: str):
+        if path.startswith("api/"):
+            raise StarletteHTTPException(404, "Not found")
+        file = (STATIC_DIR / path).resolve()
+        if path and file.is_file() and file.is_relative_to(STATIC_DIR):
+            return FileResponse(file)
+        return FileResponse(STATIC_DIR / "index.html", headers={"Cache-Control": "no-cache"})

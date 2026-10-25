@@ -68,22 +68,21 @@ App name and id: `frontend/capacitor.config.json` (`appName`, `appId`). Change t
 
 ## Develop without Docker
 
-```bash
-# database only
-docker compose up -d db
+Needs Python 3.11+, Node and a PostgreSQL with a `shop` database (see `DATABASE_URL` in `.env`). The tables are created on first start.
 
-# API (Python 3.11+)
-cd backend
-python -m venv .venv && .venv\Scripts\activate      # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-set DATABASE_URL=postgresql://shop:shop@localhost:5432/shop   # db port must be published, see below
-uvicorn app.main:app --reload
+```powershell
+# once, from the project folder
+python -m venv venv
+venv\Scripts\pip install -r requirements.txt
 
-# frontend (proxies /api to :8000)
-cd frontend && npm install && npm run dev            # http://localhost:5173
+# terminal 1: API on http://localhost:8000 (reads .env)
+.\run-backend.ps1
+
+# terminal 2: website on http://localhost:5173 (proxies /api to :8000)
+.\run-frontend.ps1
 ```
 
-The compose file doesn't publish the database port. For local API development, add `ports: ["5432:5432"]` under `db`.
+To use the Docker database instead of a local PostgreSQL, run `docker compose up -d db` and add `ports: ["5432:5432"]` under `db`.
 
 ## Going live checklist
 

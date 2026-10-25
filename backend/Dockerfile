@@ -6,7 +6,7 @@ WORKDIR /srv
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
+COPY backend/app ./app
 RUN useradd --create-home shop && mkdir -p /srv/uploads && chown shop /srv/uploads
 USER shop
 

@@ -33,6 +33,8 @@ class Settings:
     razorpay_key_secret = os.getenv("RAZORPAY_KEY_SECRET", "")
 
     upload_dir = os.getenv("UPLOAD_DIR", "./uploads")
+    # Built website (frontend/dist). When set, the API also serves the website — used on Render.
+    static_dir = os.getenv("STATIC_DIR", "")
     # Browser origins allowed to call the API. "*" also covers the Android/iOS app (capacitor://, http://localhost).
     cors_origins = _list(os.getenv("CORS_ORIGINS", "*"))
 

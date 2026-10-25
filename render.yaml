@@ -1,0 +1,50 @@
+# Render Blueprint: Dashboard › New › Blueprint › pick this repo.
+services:
+  - type: web
+    name: my-store
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/docs
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: my-store-db
+          property: connectionString
+      - key: ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      # Asked for when the Blueprint is created.
+      - key: ADMIN_PHONE
+        sync: false
+      - key: SHOP_NAME
+        sync: false
+      - key: SHOP_PHONE
+        sync: false
+      - key: SHOP_ADDRESS
+        sync: false
+      # Your Render address, e.g. https://my-store.onrender.com
+      - key: SHOP_URL
+        sync: false
+      - key: SHOP_TIMEZONE
+        value: Asia/Kolkata
+      # No SMS provider yet, so login codes are shown on screen.
+      - key: OTP_DEV_MODE
+        value: "true"
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+    # Product photos are lost on every deploy/restart without a disk.
+    # Disks need a paid plan: set plan: starter above and uncomment.
+    # disk:
+    #   name: uploads
+    #   mountPath: /srv/uploads
+    #   sizeGB: 1
+
+databases:
+  - name: my-store-db
+    databaseName: shop
+    user: shop
+    plan: free
