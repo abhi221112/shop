@@ -229,6 +229,9 @@ a.footer-line svg { margin-top: 0; }
 /* ---------- home ---------- */
 .app-header { background: var(--green); color: var(--white); padding: calc(16px + var(--safe-top)) 16px 14px; display: flex; flex-direction: column; gap: 12px; }
 .app-header-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+/* The logo's dark green lettering needs a light background on the green header. */
+.app-header-logo { display: inline-flex; padding: 6px 12px; border-radius: 12px; background: var(--white); }
+.app-header-logo img { display: block; height: 30px; width: auto; }
 .app-header-address { display: flex; flex-direction: column; gap: 2px; color: var(--white); text-decoration: none; min-width: 0; }
 .app-header-address:hover { color: var(--white); }
 .app-header-address .small { color: var(--mint); font-size: 12px; }

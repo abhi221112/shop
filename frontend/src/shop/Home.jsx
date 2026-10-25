@@ -84,6 +84,7 @@ export default function Home() {
 
 function MobileHeader({ q, onSearch }) {
   const { user } = useAuth();
+  const { config } = useShop();
   const [address, setAddress] = useState(null);
   useEffect(() => {
     if (user) api('/addresses').then((a) => setAddress(a[0] || null)).catch(() => {});
@@ -92,12 +93,13 @@ function MobileHeader({ q, onSearch }) {
   return (
     <header className="app-header mobile-only">
       <div className="app-header-row">
-        <Link to={user ? '/account' : '/login'} className="app-header-address">
-          <span className="small">Deliver to · {address?.label || 'Home'}</span>
-          <strong>{address ? address.line : user ? 'Add your address' : 'Log in to set address'}</strong>
-        </Link>
+        <Link to="/" className="app-header-logo"><img src="/logo.webp" alt={config.shopName} /></Link>
         <Link to="/orders" className="icon-btn icon-btn-green" aria-label="My orders and updates"><BellIcon size={20} /></Link>
       </div>
+      <Link to={user ? '/account' : '/login'} className="app-header-address">
+        <span className="small">Deliver to · {address?.label || 'Home'}</span>
+        <strong>{address ? address.line : user ? 'Add your address' : 'Log in to set address'}</strong>
+      </Link>
       <label className="search">
         <SearchIcon size={18} />
         <input aria-label="Search vegetables" placeholder="Search tomato, palak, bhindi…" value={q} onChange={(e) => onSearch(e.target.value)} />
