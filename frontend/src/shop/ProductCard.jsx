@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { fmtQty, qtyOptions, rupees, unitLabel } from '../format';
+import { Link } from 'react-router-dom';
+import { fmtQty, hasBulk, qtyOptions, rupees, unitLabel } from '../format';
 import { ProductImage } from '../components/ui';
 import { useCart, useShop } from '../state';
 import { ArrowDownIcon } from '../components/Icons';
@@ -42,6 +43,9 @@ export default function ProductCard({ product }) {
           </label>
           <button className="btn btn-primary" disabled={qty > left + 1e-9} onClick={() => add(product.id, qty)}>Add</button>
         </div>
+      )}
+      {hasBulk(product) && (
+        <Link to="/bulk" className="bulk-hint">Bulk: {rupees(product.bulkPrice)} {unitLabel(product.unit)} from {fmtQty(product.bulkMin, product.unit)} →</Link>
       )}
       {fewLeft && <span className="few-left">Only {fmtQty(product.stock, product.unit)} left</span>}
       {inCart > 0 && <span className="in-cart">In cart: {fmtQty(inCart, product.unit)}</span>}

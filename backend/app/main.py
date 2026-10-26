@@ -12,7 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import db, uploads
 from .config import settings
-from .routes import addresses, admin, auth, catalog, delivery, offers, orders
+from .routes import addresses, admin, auth, catalog, delivery, events, offers, orders
 from .services.orders import expire_unpaid_orders
 from .util import ApiError
 
@@ -71,7 +71,7 @@ async def validation_error(_req: Request, exc: RequestValidationError):
     return JSONResponse({"error": "Some details are missing or not valid"}, status_code=422)
 
 
-for module in (catalog, auth, addresses, orders, offers, admin, delivery):
+for module in (catalog, auth, addresses, orders, offers, events, admin, delivery):
     app.include_router(module.router)
 
 app.include_router(uploads.router)

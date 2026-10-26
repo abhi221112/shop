@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { isNativeApp } from '../api';
-import { CartIcon, ClockIcon, GridIcon, HomeIcon, ListIcon, PhoneIcon, PinIcon, SearchIcon, UserIcon } from '../components/Icons';
+import { CartIcon, ClockIcon, GridIcon, HomeIcon, ListIcon, PhoneIcon, PinIcon, SearchIcon, TruckIcon, UserIcon } from '../components/Icons';
 import { useAuth, useCart, useShop } from '../state';
 
 const NAV_PAGES = ['/', '/categories', '/orders', '/account'];
@@ -43,6 +43,7 @@ function DesktopHeader() {
         <nav aria-label="Account" className="site-header-nav">
           {user?.role === 'admin' && <Link to="/admin" className="nav-link">Admin</Link>}
           {user?.role === 'delivery' && <Link to="/delivery" className="nav-link">Deliveries</Link>}
+          <Link to="/bulk" className="nav-link">Bulk order</Link>
           <Link to="/orders" className="nav-link">My orders</Link>
           {user ? <Link to="/account" className="nav-link">{user.name || 'Account'}</Link> : <Link to="/login" className="nav-link">Login</Link>}
           <Link to="/cart" className="btn btn-dark"><CartIcon size={18} />Cart · {count}</Link>
@@ -84,6 +85,7 @@ function Footer({ onMobile }) {
           <strong>{config.shopName}</strong>
           <span>Fresh vegetables and fruits, delivered to your door.</span>
           <span className="footer-line"><ClockIcon size={16} />Order anytime, 5 AM – 10 PM</span>
+          <Link to="/bulk" className="footer-line"><TruckIcon size={16} />Bulk &amp; event orders at special rates</Link>
           {!isNativeApp() && <span className="small">Order daily? Add this site to your home screen.</span>}
         </div>
 

@@ -5,6 +5,7 @@ import { useShop } from '../state';
 
 const LINKS = [
   ['/admin', "Today's orders"],
+  ['/admin/events', 'Event orders'],
   ['/admin/complaints', 'Complaints'],
   ['/admin/prices', 'Prices & stock'],
   ['/admin/offers', 'Offers'],
@@ -18,9 +19,11 @@ const LINKS = [
 export default function AdminLayout() {
   const { config } = useShop();
   const { pathname } = useLocation();
-  const [pending, setPending] = useState(0);
+  const [counts, setCounts] = useState({});
   useEffect(() => {
-    api('/admin/summary').then((s) => setPending(s.pendingComplaints || 0)).catch(() => {});
+    api('/admin/summary')
+      .then((s) => setCounts({ '/admin/complaints': s.pendingComplaints || 0, '/admin/events': s.newEvents || 0 }))
+      .catch(() => {});
   }, [pathname]);
   return (
     <div className="admin">
@@ -30,7 +33,7 @@ export default function AdminLayout() {
           {LINKS.map(([to, label]) => (
             <NavLink key={to} to={to} end className={({ isActive }) => `admin-nav-link ${isActive ? 'is-active' : ''}`}>
               {label}
-              {to === '/admin/complaints' && pending > 0 && <span className="nav-count" aria-label={`${pending} waiting`}>{pending}</span>}
+              {counts[to] > 0 && <span className="nav-count" aria-label={`${counts[to]} waiting`}>{counts[to]}</span>}
             </NavLink>
           ))}
           <Link to="/" className="admin-nav-link admin-nav-shop">View shop →</Link>

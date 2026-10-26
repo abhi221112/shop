@@ -1,7 +1,7 @@
 """Turns a cart (loose items + combo packs) into priced order lines, checking stock."""
 from collections import defaultdict
 
-from ..util import ApiError, format_qty
+from ..util import ApiError, format_qty, unit_price
 
 
 def _parse(items, combos) -> tuple[dict, dict]:
@@ -73,7 +73,8 @@ async def build_lines(conn, items, combos, *, combos_enabled: bool, lock: bool =
     lines = []
     for pid, qty in loose.items():
         p = products[pid]
-        lines.append({"product": p, "qty": qty, "lineTotal": round(qty * p["price"]),
+        price, bulk = unit_price(p, qty)
+        lines.append({"product": p, "qty": qty, "price": price, "bulk": bulk, "lineTotal": round(qty * price),
                       "comboId": None, "comboName": None, "comboCount": None})
     savings = 0.0
     for r in combo_rows:
@@ -83,7 +84,7 @@ async def build_lines(conn, items, combos, *, combos_enabled: bool, lock: bool =
             qty = float(ci["qty"]) * n
             line_total = round(qty * p["price"])
             regular += line_total
-            lines.append({"product": p, "qty": qty, "lineTotal": line_total,
+            lines.append({"product": p, "qty": qty, "price": p["price"], "bulk": False, "lineTotal": line_total,
                           "comboId": r["id"], "comboName": r["name"], "comboCount": n})
         savings += max(0.0, regular - float(r["price"]) * n)
 
@@ -97,7 +98,8 @@ def public_lines(lines) -> list[dict]:
     return [{
         "productId": line["product"]["id"], "name": line["product"]["name"], "unit": line["product"]["unit"],
         "qty": line["qty"], "qtyLabel": format_qty(line["qty"], line["product"]["unit"]),
-        "price": line["product"]["price"], "lineTotal": line["lineTotal"],
+        "price": line["price"], "bulk": line["bulk"], "regularPrice": line["product"]["price"],
+        "lineTotal": line["lineTotal"],
         "comboId": line["comboId"], "comboName": line["comboName"], "comboCount": line["comboCount"],
     } for line in lines]
 

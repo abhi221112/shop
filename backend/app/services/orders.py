@@ -17,7 +17,7 @@ ORDER_SELECT = """
          d.name AS delivery_name, d.phone AS delivery_phone,
          COALESCE(json_agg(json_build_object(
            'id', i.id, 'productId', i.product_id, 'name', i.name, 'unit', i.unit,
-           'qty', i.qty, 'price', i.price, 'lineTotal', i.line_total,
+           'qty', i.qty, 'price', i.price, 'lineTotal', i.line_total, 'bulk', i.bulk,
            'comboId', i.combo_id, 'comboName', i.combo_name, 'comboCount', i.combo_count
          ) ORDER BY i.combo_name NULLS FIRST, i.id) FILTER (WHERE i.id IS NOT NULL), '[]') AS items
   FROM orders o
@@ -150,10 +150,10 @@ async def create_order(user, body: dict) -> dict:
             p = line["product"]
             await c.execute(
                 """INSERT INTO order_items (order_id, product_id, name, unit, qty, price, line_total,
-                                            combo_id, combo_name, combo_count)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
-                order_id, p["id"], p["name"], p["unit"], line["qty"], p["price"], line["lineTotal"],
-                line["comboId"], line["comboName"], line["comboCount"],
+                                            combo_id, combo_name, combo_count, bulk)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)""",
+                order_id, p["id"], p["name"], p["unit"], line["qty"], line["price"], line["lineTotal"],
+                line["comboId"], line["comboName"], line["comboCount"], line["bulk"],
             )
         if bill["walletUsed"]:
             await spend(c, user["id"], bill["walletUsed"], order_id, f"VS-{seq}")

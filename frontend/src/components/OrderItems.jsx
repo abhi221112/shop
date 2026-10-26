@@ -19,7 +19,10 @@ export default function OrderItems({ order, prices = true }) {
         </div>
       ))}
       {loose.map((i) => (
-        <div key={i.id} className="row-between"><span>{i.name} · {i.qtyLabel}</span>{prices && <span>{rupees(i.lineTotal)}</span>}</div>
+        <div key={i.id} className="row-between">
+          <span>{i.name} · {i.qtyLabel}{i.bulk && <span className="bulk-tag">Bulk rate</span>}</span>
+          {prices && <span>{rupees(i.lineTotal)}</span>}
+        </div>
       ))}
       {order.gift && <div className="row-between gift-line"><span>Free gift · {order.gift}</span>{prices && <strong>FREE</strong>}</div>}
       {prices && (

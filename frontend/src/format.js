@@ -23,6 +23,18 @@ export function qtyOptions(p) {
   return Array.from({ length: 10 }, (_, i) => trim((i + 1) * p.step));
 }
 
+export const hasBulk = (p) => p.bulkPrice != null && p.bulkMin > 0;
+
+/** Price per unit for this quantity: the bulk rate once one line reaches bulkMin (the server applies the same rule). */
+export const unitPrice = (p, qty) => (hasBulk(p) && qty >= p.bulkMin - 1e-9 ? p.bulkPrice : p.price);
+
+/** Quantities offered on the bulk page: from the bulk start up to ten times it. */
+export function bulkOptions(p) {
+  const nice = [1, 2, 3, 5, 10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200, 250, 500];
+  const opts = nice.filter((v) => v > p.bulkMin + 1e-9 && v <= p.bulkMin * 10 + 1e-9 && isMultiple(v, p.step));
+  return [p.bulkMin, ...opts];
+}
+
 export const STATUS_LABEL = {
   new: 'New',
   confirmed: 'Confirmed',

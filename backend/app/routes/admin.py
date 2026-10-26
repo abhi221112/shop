@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Depends, Request
 
 from .. import db
 from ..auth import require_role
-from ..services import complaints
+from ..services import complaints, events
 from ..services.combos import list_combos, save_combo
 from ..services.offers import get_offers, save_offers
 from ..services.orders import change_status, find_orders, get_order
@@ -57,6 +57,7 @@ async def summary(date: str | None = None):
     )
     low = await db.fetch("SELECT name FROM products WHERE active AND stock <= low_stock_at ORDER BY stock")
     pending = await db.fetchval("SELECT count(*) FROM complaints WHERE status = 'pending'")
+    new_events = await db.fetchval("SELECT count(*) FROM event_requests WHERE status = 'new'")
     return {
         "date": day.isoformat(),
         "orders": totals["orders"],
@@ -66,6 +67,7 @@ async def summary(date: str | None = None):
         "toPack": totals["to_pack"],
         "issues": totals["issues"],
         "pendingComplaints": pending,
+        "newEvents": new_events,
         "lowStock": [p["name"] for p in low],
         "slots": [dict(s) for s in slots],
     }
@@ -252,6 +254,18 @@ async def reports(days: int = 30):
     }
 
 
+# ---------- Event orders ----------
+
+@router.get("/events")
+async def event_requests(status: str | None = None):
+    return await events.find(status)
+
+
+@router.post("/events/{request_id}")
+async def update_event_request(request_id: int, body: dict = Body(default={})):
+    return await events.update(request_id, body.get("status"), body.get("note"))
+
+
 # ---------- Products ----------
 
 @router.get("/products")
@@ -289,7 +303,21 @@ def product_fields(b) -> dict:
         raise ApiError(400, "Enter a price")
     if f["stock"] is None or f["stock"] < 0 or f["lowStockAt"] is None or f["lowStockAt"] < 0:
         raise ApiError(400, "Stock must be zero or more")
+    f["bulkPrice"], f["bulkMin"] = bulk_rate(f["name"], f["price"], f["step"], num("bulkPrice"), num("bulkMin"))
     return f
+
+
+def bulk_rate(name, price, step, bulk_price, bulk_min) -> tuple[float | None, float | None]:
+    """Checked (bulk price, quantity it starts from). Both empty turns the bulk rate off."""
+    if bulk_price is None and bulk_min is None:
+        return None, None
+    if bulk_price is None or bulk_min is None:
+        raise ApiError(400, f"{name}: enter both the bulk rate and the quantity it starts from")
+    if not 0 <= bulk_price < price:
+        raise ApiError(400, f"{name}: the bulk rate must be lower than today's price")
+    if bulk_min < step:
+        raise ApiError(400, f"{name}: bulk must start from at least the smallest quantity")
+    return bulk_price, bulk_min
 
 
 @router.post("/products", status_code=201)
@@ -299,10 +327,10 @@ async def add_product(request: Request):
     image_url = await save_image(form.get("image"))
     p = await db.fetchrow(
         """INSERT INTO products (name, local_name, category, unit, step, price, yesterday_price, price_date,
-                                 stock, low_stock_at, tint, image_url)
-           VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11) RETURNING *""",
+                                 stock, low_stock_at, tint, image_url, bulk_price, bulk_min)
+           VALUES ($1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *""",
         f["name"], f["localName"], f["category"], f["unit"], f["step"], f["price"], shop_date(),
-        f["stock"], f["lowStockAt"], f["tint"], image_url,
+        f["stock"], f["lowStockAt"], f["tint"], image_url, f["bulkPrice"], f["bulkMin"],
     )
     return to_product(p)
 
@@ -319,10 +347,11 @@ async def edit_product(product_id: int, request: Request):
     image_url = new_image or (None if form.get("removeImage") == "true" else old["image_url"])
     p = await db.fetchrow(
         """UPDATE products SET name = $2, local_name = $3, category = $4, unit = $5, step = $6, price = $7,
-                  stock = $8, low_stock_at = $9, tint = $10, image_url = $11, updated_at = now()
+                  stock = $8, low_stock_at = $9, tint = $10, image_url = $11, bulk_price = $12, bulk_min = $13,
+                  updated_at = now()
            WHERE id = $1 RETURNING *""",
         product_id, f["name"], f["localName"], f["category"], f["unit"], f["step"], f["price"],
-        f["stock"], f["lowStockAt"], f["tint"], image_url,
+        f["stock"], f["lowStockAt"], f["tint"], image_url, f["bulkPrice"], f["bulkMin"],
     )
     if old["image_url"] and old["image_url"] != image_url:
         await remove_image(old["image_url"])
@@ -331,24 +360,34 @@ async def edit_product(product_id: int, request: Request):
 
 @router.put("/products/prices")
 async def save_prices(rows: list[dict] = Body(default=[])):
-    """Morning price update: [{id, price, stock, active}]. A price changed on a new day moves the old one to "yesterday"."""
+    """Morning price update: [{id, price, stock, active, bulkPrice?, bulkMin?}].
+    A price changed on a new day moves the old one to "yesterday"."""
+    def optional(value):
+        return None if value in (None, "") else float(value)
+
     today = shop_date()
     async with db.transaction() as c:
         for row in rows:
             try:
                 pid, price, stock = int(row["id"]), float(row["price"]), float(row["stock"])
+                old = await c.fetchrow("SELECT name, step, bulk_price, bulk_min FROM products WHERE id = $1", pid)
+                bulk_price = optional(row["bulkPrice"]) if "bulkPrice" in row else old and old["bulk_price"]
+                bulk_min = optional(row["bulkMin"]) if "bulkMin" in row else old and old["bulk_min"]
             except (KeyError, TypeError, ValueError):
                 raise ApiError(400, "Every row needs a price and stock")
+            if not old:
+                raise ApiError(404, "Vegetable not found")
             if price < 0 or stock < 0:
                 raise ApiError(400, "Prices and stock must be zero or more")
+            bulk_price, bulk_min = bulk_rate(old["name"], price, old["step"], bulk_price, bulk_min)
             await c.execute(
                 """UPDATE products SET
                      yesterday_price = CASE WHEN price <> $2 AND price_date IS DISTINCT FROM $5 THEN price
                                             ELSE yesterday_price END,
                      price_date      = CASE WHEN price <> $2 THEN $5 ELSE price_date END,
-                     price = $2, stock = $3, active = $4, updated_at = now()
+                     price = $2, stock = $3, active = $4, bulk_price = $6, bulk_min = $7, updated_at = now()
                    WHERE id = $1""",
-                pid, price, stock, bool(row.get("active")), today,
+                pid, price, stock, bool(row.get("active")), today, bulk_price, bulk_min,
             )
     return await all_products()
 

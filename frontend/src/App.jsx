@@ -10,6 +10,7 @@ import Orders from './shop/Orders';
 import Tracking from './shop/Tracking';
 import Account from './shop/Account';
 import Refer from './shop/Refer';
+import Bulk from './shop/Bulk';
 import AdminOffers from './admin/AdminOffers';
 import AdminCombos from './admin/AdminCombos';
 import AdminComplaints from './admin/AdminComplaints';
@@ -21,6 +22,7 @@ import AdminSlots from './admin/AdminSlots';
 import PackingList from './admin/PackingList';
 import AdminCustomers from './admin/AdminCustomers';
 import AdminReports from './admin/AdminReports';
+import AdminEvents from './admin/AdminEvents';
 import DeliveryList from './delivery/DeliveryList';
 import DeliveryOrder from './delivery/DeliveryOrder';
 
@@ -41,6 +43,7 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="categories" element={<Categories />} />
         <Route path="cart" element={<Cart />} />
+        <Route path="bulk" element={<Bulk />} />
         <Route path="checkout" element={<RequireRole><Checkout /></RequireRole>} />
         <Route path="orders" element={<RequireRole><Orders /></RequireRole>} />
         <Route path="orders/:id" element={<RequireRole><Tracking /></RequireRole>} />
@@ -57,6 +60,7 @@ export default function App() {
         <Route path="offers" element={<AdminOffers />} />
         <Route path="combos" element={<AdminCombos />} />
         <Route path="complaints" element={<AdminComplaints />} />
+        <Route path="events" element={<AdminEvents />} />
         <Route path="reports" element={<AdminReports />} />
       </Route>
       <Route path="admin/packing" element={<RequireRole roles={['admin']}><PackingList /></RequireRole>} />

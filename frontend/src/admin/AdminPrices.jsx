@@ -5,7 +5,8 @@ import { ErrorNote, ProductImage, Spinner, Toggle } from '../components/ui';
 import { useShop } from '../state';
 import { shrinkImage } from './image';
 
-const toEdit = (p) => ({ price: String(p.price), stock: String(p.stock), active: p.active });
+const text = (n) => (n == null ? '' : String(n));
+const toEdit = (p) => ({ price: String(p.price), stock: String(p.stock), active: p.active, bulkPrice: text(p.bulkPrice), bulkMin: text(p.bulkMin) });
 
 export default function AdminPrices() {
   const { reloadProducts } = useShop();
@@ -29,7 +30,8 @@ export default function AdminPrices() {
 
   const changed = useMemo(() => (products || []).filter((p) => {
     const e = edits[p.id];
-    return e && (Number(e.price) !== p.price || Number(e.stock) !== p.stock || e.active !== p.active);
+    return e && (Number(e.price) !== p.price || Number(e.stock) !== p.stock || e.active !== p.active
+      || e.bulkPrice.trim() !== text(p.bulkPrice) || e.bulkMin.trim() !== text(p.bulkMin));
   }), [products, edits]);
 
   const set = (id, key, value) => setEdits((all) => ({ ...all, [id]: { ...all[id], [key]: value } }));
@@ -46,7 +48,10 @@ export default function AdminPrices() {
     setError('');
     setNotice('');
     try {
-      const rows = changed.map((p) => ({ id: p.id, price: Number(edits[p.id].price), stock: Number(edits[p.id].stock), active: edits[p.id].active }));
+      const rows = changed.map((p) => {
+        const e = edits[p.id];
+        return { id: p.id, price: Number(e.price), stock: Number(e.stock), active: e.active, bulkPrice: e.bulkPrice.trim(), bulkMin: e.bulkMin.trim() };
+      });
       if (rows.some((r) => !(r.price >= 0) || !(r.stock >= 0))) throw new Error('Prices and stock must be numbers, zero or more');
       reset(await api('/admin/products/prices', { method: 'PUT', body: rows }));
       reloadProducts();
@@ -82,7 +87,7 @@ export default function AdminPrices() {
       <div className="admin-head">
         <div className="stack-xs">
           <h1 className="page-title">Today's prices &amp; stock</h1>
-          <span className="muted">Set this every morning after the mandi. Saved prices go live on the app and website.</span>
+          <span className="muted">Set this every morning after the mandi. Saved prices go live on the app and website. A bulk rate (e.g. ₹27 from 10 kg) shows the item under Bulk order; leave both boxes empty for no bulk rate.</span>
         </div>
         <div className="row gap wrap">
           <button className="btn btn-outline" onClick={copyYesterday} disabled={!products}>Copy yesterday's prices</button>
@@ -104,7 +109,7 @@ export default function AdminPrices() {
         <div className="table-box">
           <table className="table">
             <thead>
-              <tr><th>Photo</th><th>Vegetable</th><th>Sold by</th><th>Yesterday</th><th>Today's price (₹)</th><th>Stock left</th><th>Show to customers</th></tr>
+              <tr><th>Photo</th><th>Vegetable</th><th>Sold by</th><th>Yesterday</th><th>Today's price (₹)</th><th>Bulk rate (₹) · from</th><th>Stock left</th><th>Show to customers</th></tr>
             </thead>
             <tbody>
               {shown.map((p) => {
@@ -137,6 +142,14 @@ export default function AdminPrices() {
                     <td><input className="input input-num" inputMode="decimal" aria-label={`Today's price for ${p.name}`} value={e.price} onChange={(ev) => set(p.id, 'price', ev.target.value)} /></td>
                     <td>
                       <span className="row gap-sm">
+                        <input className="input input-num input-num-sm" inputMode="decimal" placeholder="—" aria-label={`Bulk rate for ${p.name}`} value={e.bulkPrice} onChange={(ev) => set(p.id, 'bulkPrice', ev.target.value)} />
+                        <span className="muted small">from</span>
+                        <input className="input input-num input-num-sm" inputMode="decimal" placeholder="—" aria-label={`Bulk rate for ${p.name} starts from, in ${p.unit}`} value={e.bulkMin} onChange={(ev) => set(p.id, 'bulkMin', ev.target.value)} />
+                        <span className="muted small">{p.unit}</span>
+                      </span>
+                    </td>
+                    <td>
+                      <span className="row gap-sm">
                         <input className="input input-num" inputMode="decimal" aria-label={`Stock of ${p.name} in ${p.unit}`} value={e.stock} onChange={(ev) => set(p.id, 'stock', ev.target.value)} />
                         <span className={low ? 'text-red small strong' : 'muted small'}>{p.unit}{low ? ' · low' : ''}</span>
                       </span>
@@ -154,7 +167,7 @@ export default function AdminPrices() {
 }
 
 function AddProduct({ onDone }) {
-  const [f, setF] = useState({ name: '', localName: '', category: 'Everyday', unit: 'kg', step: '0.25', price: '', stock: '', lowStockAt: '5', tint: '#E4EED5' });
+  const [f, setF] = useState({ name: '', localName: '', category: 'Everyday', unit: 'kg', step: '0.25', price: '', stock: '', lowStockAt: '5', tint: '#E4EED5', bulkPrice: '', bulkMin: '' });
   const [image, setImage] = useState(null);
   const preview = useMemo(() => (image ? URL.createObjectURL(image) : null), [image]);
   useEffect(() => () => preview && URL.revokeObjectURL(preview), [preview]);
@@ -181,7 +194,7 @@ function AddProduct({ onDone }) {
     <form className="card form-grid" onSubmit={submit}>
       <h2 className="card-title span-all">Add a vegetable</h2>
       <label className="field"><span>Name</span><input className="input" required value={f.name} onChange={set('name')} placeholder="Tomato" /></label>
-      <label className="field"><span>Local name</span><input className="input" value={f.localName} onChange={set('localName')} placeholder="Tamatar" /></label>
+      <label className="field"><span>Local name</span><input className="input" value={f.localName} onChange={set('localName')} placeholder="टमाटर" /></label>
       <label className="field"><span>Category</span>
         <input className="input" list="categories" value={f.category} onChange={set('category')} />
         <datalist id="categories">{['Leafy', 'Roots', 'Everyday', 'Fruits', 'Exotic'].map((c) => <option key={c} value={c} />)}</datalist>
@@ -194,6 +207,8 @@ function AddProduct({ onDone }) {
       <label className="field"><span>Smallest quantity ({f.unit})</span><input className="input" required inputMode="decimal" value={f.step} onChange={set('step')} /></label>
       <label className="field"><span>Price per {f.unit} (₹)</span><input className="input" required inputMode="decimal" value={f.price} onChange={set('price')} /></label>
       <label className="field"><span>Stock ({f.unit})</span><input className="input" required inputMode="decimal" value={f.stock} onChange={set('stock')} /></label>
+      <label className="field"><span>Bulk rate per {f.unit} (₹, optional)</span><input className="input" inputMode="decimal" value={f.bulkPrice} onChange={set('bulkPrice')} placeholder="e.g. 27" /></label>
+      <label className="field"><span>Bulk rate from ({f.unit})</span><input className="input" inputMode="decimal" value={f.bulkMin} onChange={set('bulkMin')} placeholder="e.g. 10" /></label>
       <label className="field"><span>Warn when stock below</span><input className="input" inputMode="decimal" value={f.lowStockAt} onChange={set('lowStockAt')} /></label>
       <label className="field"><span>Photo (optional)</span>
         <span className="row gap-sm">

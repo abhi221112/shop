@@ -35,6 +35,7 @@ export default function Home() {
         <>
           <OfferStrip perks={perks} />
           <PromiseStrip />
+          <BulkCard />
           <ReorderCard />
           <PriceDropRow />
           <CombosRow />
@@ -189,5 +190,21 @@ function CartBar() {
       </span>
       <span>View cart →</span>
     </Link>
+  );
+}
+
+/** Entry to bulk buying: daily bulk rates and event (wedding, anniversary…) orders. */
+function BulkCard() {
+  return (
+    <section className="container section">
+      <Link to="/bulk" className="bulk-card">
+        <span className="offer-icon"><TruckIcon size={22} /></span>
+        <span className="stack-xs grow">
+          <strong>Buying in bulk?</strong>
+          <span className="small">Special rates on potato, onion, chilli, ginger &amp; more. Wedding, anniversary or puja? Send us your list.</span>
+        </span>
+        <span className="btn btn-yellow">Bulk order</span>
+      </Link>
+    </section>
   );
 }

@@ -220,3 +220,29 @@ CREATE TABLE IF NOT EXISTS images (
   data          BYTEA NOT NULL,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Bulk rate: a lower price per unit once one cart line reaches bulk_min (both empty = no bulk rate).
+ALTER TABLE products ADD COLUMN IF NOT EXISTS bulk_price NUMERIC(8, 2);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS bulk_min NUMERIC(9, 3);
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS bulk BOOLEAN NOT NULL DEFAULT false;
+
+-- Event orders (wedding, anniversary...): the customer sends what they need, the shop calls to confirm the price.
+CREATE TABLE IF NOT EXISTS event_requests (
+  id              SERIAL PRIMARY KEY,
+  user_id         INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  customer_name   TEXT NOT NULL,
+  customer_phone  TEXT NOT NULL,
+  event_type      TEXT NOT NULL,
+  event_date      DATE NOT NULL,
+  guests          INT,
+  address         TEXT NOT NULL,
+  items           JSONB NOT NULL DEFAULT '[]',
+  estimate        NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  notes           TEXT NOT NULL DEFAULT '',
+  status          TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'confirmed', 'delivered', 'cancelled')),
+  shop_note       TEXT NOT NULL DEFAULT '',
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS event_requests_status_idx ON event_requests (status, event_date);
+CREATE INDEX IF NOT EXISTS event_requests_user_idx ON event_requests (user_id, created_at DESC);

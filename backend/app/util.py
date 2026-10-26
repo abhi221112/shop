@@ -74,6 +74,13 @@ def format_qty(qty: float, unit: str) -> str:
     return f"{qty:g} {word[0] if qty == 1 else word[1]}"
 
 
+def unit_price(p, qty: float) -> tuple[float, bool]:
+    """Price per unit for this quantity of product row `p`, and whether that is the bulk rate."""
+    if p["bulk_price"] is not None and p["bulk_min"] and qty >= p["bulk_min"] - 1e-9:
+        return p["bulk_price"], True
+    return p["price"], False
+
+
 def to_product(r) -> dict:
     return {
         "id": r["id"],
@@ -83,6 +90,8 @@ def to_product(r) -> dict:
         "unit": r["unit"],
         "step": r["step"],
         "price": r["price"],
+        "bulkPrice": r["bulk_price"],
+        "bulkMin": r["bulk_min"],
         "yesterdayPrice": r["yesterday_price"],
         "stock": r["stock"],
         "lowStockAt": r["low_stock_at"],

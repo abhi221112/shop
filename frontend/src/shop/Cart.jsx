@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { fmtQty, rupees, unitLabel } from '../format';
+import { fmtQty, hasBulk, rupees, unitLabel } from '../format';
 import { InfoIcon } from '../components/Icons';
 import { ErrorNote, PageHeader, ProductImage, Spinner } from '../components/ui';
 import { useBill, useCart, useQuote } from '../state';
@@ -41,12 +41,19 @@ export default function Cart() {
                   </div>
                 </div>
               ))}
-              {items.map(({ product: p, qty, lineTotal }) => (
+              {items.map(({ product: p, qty, price, bulk, lineTotal }) => (
                 <div key={p.id} className="cart-line">
                   <ProductImage product={p} className="thumb" />
                   <div className="cart-line-info">
                     <strong>{p.name}</strong>
-                    <span className="muted small">{rupees(p.price)} {unitLabel(p.unit)}</span>
+                    <span className="muted small">
+                      {bulk && <s>{rupees(p.price)}</s>} {rupees(price)} {unitLabel(p.unit)}
+                      {bulk && <span className="bulk-tag">Bulk rate</span>}
+                    </span>
+                    {bulk && <span className="small text-green strong">You save {rupees(qty * (p.price - price))}</span>}
+                    {!bulk && hasBulk(p) && qty >= p.bulkMin / 2 && (
+                      <span className="small text-green strong">Add {fmtQty(p.bulkMin - qty, p.unit)} more for {rupees(p.bulkPrice)} {unitLabel(p.unit)}</span>
+                    )}
                   </div>
                   <div className="cart-line-right">
                     <div className="stepper">

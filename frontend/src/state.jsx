@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api, setToken, storage } from './api';
+import { unitPrice } from './format';
 
 // Remember a friend's referral code from a shared link (?ref=CODE) until the visitor signs up.
 try {
@@ -136,7 +137,9 @@ export function useBill() {
     const items = Object.entries(lines)
       .map(([id, qty]) => {
         const product = products.find((p) => p.id === Number(id));
-        return product ? { product, qty, lineTotal: Math.round(qty * product.price) } : null;
+        if (!product) return null;
+        const price = unitPrice(product, qty);
+        return { product, qty, price, bulk: price !== product.price, lineTotal: Math.round(qty * price) };
       })
       .filter(Boolean);
     const comboLines = Object.entries(combos)
